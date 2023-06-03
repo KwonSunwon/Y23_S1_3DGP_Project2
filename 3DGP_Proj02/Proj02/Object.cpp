@@ -167,6 +167,9 @@ void CGameObject::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pC
 
 	if (m_nMaterials > 0)
 	{
+		if (!IsVisible(pCamera))
+			return;
+
 		for (int i = 0; i < m_nMaterials; i++)
 		{
 			if (m_ppMaterials[i])
@@ -309,6 +312,17 @@ void CGameObject::Rotate(XMFLOAT4* pxmf4Quaternion)
 	m_xmf4x4Transform = Matrix4x4::Multiply(mtxRotate, m_xmf4x4Transform);
 
 	UpdateTransform(NULL);
+}
+
+bool CGameObject::IsVisible(CCamera* pCamera)
+{
+	OnPrepareRender();
+
+	bool bIsVisible = false;
+	BoundingOrientedBox xmBoundingBox = m_pMesh->GetBoundingBox();
+	xmBoundingBox.Transform(xmBoundingBox, XMLoadFloat4x4(&m_xmf4x4World));
+	if (pCamera) bIsVisible = pCamera->IsInFrustum(xmBoundingBox);
+	return bIsVisible;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -575,9 +589,9 @@ CGameObject* CGameObject::LoadFrameHierarchyFromFile(ID3D12Device* pd3dDevice, I
 					_stprintf_s(pstrDebug, 256, _T("(Child Frame: %p) (Parent Frame: %p)\n"), pChild, pGameObject);
 					OutputDebugString(pstrDebug);
 #endif
-				}
-			}
 		}
+	}
+}
 		else if (!strcmp(pstrToken, "</Frame>"))
 		{
 			break;
@@ -815,6 +829,6 @@ void CTankObject::Animate(float fTimeElapsed, XMFLOAT4X4* pxmf4x4Parent)
 	if (m_pTurretFrame)
 	{
 		XMMATRIX xmmtxRotate = XMMatrixRotationY(XMConvertToRadians(360.0f * 2.0f) * fTimeElapsed);
-        m_pTurretFrame->m_xmf4x4Transform = Matrix4x4::Multiply(xmmtxRotate, m_pTurretFrame->m_xmf4x4Transform);
+		m_pTurretFrame->m_xmf4x4Transform = Matrix4x4::Multiply(xmmtxRotate, m_pTurretFrame->m_xmf4x4Transform);
 	}
 }

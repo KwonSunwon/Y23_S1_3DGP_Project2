@@ -180,6 +180,8 @@ public:
 
 	UINT GetMeshType() { return((m_pMesh) ? m_pMesh->GetType() : 0); }
 
+	bool IsVisible(CCamera *pCamera=NULL);
+
 public:
 	static MATERIALSLOADINFO *LoadMaterialsInfoFromFile(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, FILE *pInFile);
 	static CMeshLoadInfo *LoadMeshInfoFromFile(FILE *pInFile);
