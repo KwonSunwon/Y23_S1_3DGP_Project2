@@ -99,4 +99,16 @@ public:
 	virtual void OnPrepareRender();
 };
 
+class CTankPlayer : public CPlayer{
+public:
+	CTankPlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
+	virtual ~CTankPlayer();
+	
+	CGameObject* m_pTurret = NULL;
 
+
+
+private:
+	virtual void OnInitialize();
+	//virtual void Animate(float fTimeElapsed, XMFLOAT4X4* pxmf4x4Parent = NULL);
+};

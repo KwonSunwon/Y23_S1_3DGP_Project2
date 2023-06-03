@@ -78,7 +78,7 @@ void CPlayer::Move(const XMFLOAT3& xmf3Shift, bool bUpdateVelocity)
 	else
 	{
 		m_xmf3Position = Vector3::Add(m_xmf3Position, xmf3Shift);
-		m_pCamera->Move(xmf3Shift);
+		//m_pCamera->Move(xmf3Shift);
 	}
 }
 
@@ -157,6 +157,8 @@ void CPlayer::Update(float fTimeElapsed)
 
 	XMFLOAT3 xmf3Velocity = Vector3::ScalarProduct(m_xmf3Velocity, fTimeElapsed, false);
 	Move(xmf3Velocity, false);
+	
+	m_pCamera->Update(this, GetLook(), fTimeElapsed);
 
 	if (m_pPlayerUpdatedContext) OnPlayerUpdateCallback(fTimeElapsed);
 
@@ -337,3 +339,37 @@ CCamera *CAirplanePlayer::ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed)
 	return(m_pCamera);
 }
 
+CTankPlayer::CTankPlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
+{
+	//m_pCamera = ChangeCamera(THIRD_PERSON_CAMERA, 0.0f);
+	// 카메라 생성 해줘야함
+	SetFriction(20.5f);
+	SetGravity(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	SetMaxVelocityXZ(25.5f);
+	SetMaxVelocityY(40.0f);
+	m_pCamera = OnChangeCamera(THIRD_PERSON_CAMERA, 0.0f);
+	m_pCamera->SetTimeLag(0.25f);
+	m_pCamera->SetOffset(XMFLOAT3(0.0f, 105.0f, -140.0f));
+	m_pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 60.0f);
+	m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
+	m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+
+	CGameObject* pGameObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/Tank_g.bin");
+
+	pGameObject->Rotate(15.0f, 0.0f, 0.0f);
+	pGameObject->SetScale(8.5f, 8.5f, 8.5f);
+	SetChild(pGameObject, true);
+
+	OnInitialize();
+
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+}
+
+CTankPlayer::~CTankPlayer()
+{
+}
+
+void CTankPlayer::OnInitialize()
+{
+	m_pTurret = FindFrame("TankTurret");
+}

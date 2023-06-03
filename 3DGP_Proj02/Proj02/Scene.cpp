@@ -73,7 +73,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	//m_nGameObjects = 7;
 	//m_ppGameObjects = new CGameObject*[m_nGameObjects];
 
-	CGameObject *pApacheModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Apache.bin");
+	/*CGameObject *pApacheModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Apache.bin");
 	CApacheObject* pApacheObject = NULL;
 
 	pApacheObject = new CApacheObject();
@@ -130,13 +130,13 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pHummerObject->SetPosition(260.0f, 0.0f, 150.0f);
 	pHummerObject->SetScale(8.0f, 8.0f, 8.0f);
 	pHummerObject->Rotate(0.0f, -90.0f, 0.0f);
-	AddGameObject(pHummerObject);
+	AddGameObject(pHummerObject);*/
 
 	CGameObject* pTankModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Tank_b.bin");
 	CTankObject* pTankObject = new CTankObject();
 	pTankObject->SetChild(pTankModel);
 	pTankObject->OnInitialize();
-	pTankObject->SetPosition(260.0f, 0.0f, 100.0f);
+	pTankObject->SetPosition(0.0f, 0.0f, 50.0f);
 	pTankObject->SetScale(8.0f, 8.0f, 8.0f);
 	pTankObject->Rotate(0.0f, -90.0f, 0.0f);
 	AddGameObject(pTankObject);
