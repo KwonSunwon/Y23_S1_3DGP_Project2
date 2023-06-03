@@ -54,6 +54,8 @@ public:
 	void BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
 	void ReleaseObjects();
 
+	void AddGameObject(CGameObject *pGameObject);
+
 	ID3D12RootSignature *CreateGraphicsRootSignature(ID3D12Device *pd3dDevice);
 	ID3D12RootSignature *GetGraphicsRootSignature() { return(m_pd3dGraphicsRootSignature); }
 
@@ -68,8 +70,10 @@ public:
 public:
 	ID3D12RootSignature			*m_pd3dGraphicsRootSignature = NULL;
 
-	CGameObject					**m_ppGameObjects = NULL;
-	int							m_nGameObjects = 0;
+	//CGameObject					**m_ppGameObjects = NULL;
+	//int							m_nGameObjects = 0;
+
+	std::vector<CGameObject*>	m_vGameObjects;
 
 	LIGHT						*m_pLights = NULL;
 	int							m_nLights = 0;

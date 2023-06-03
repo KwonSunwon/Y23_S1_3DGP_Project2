@@ -70,8 +70,8 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	BuildDefaultLightsAndMaterials();
 
-	m_nGameObjects = 7;
-	m_ppGameObjects = new CGameObject*[m_nGameObjects];
+	//m_nGameObjects = 7;
+	//m_ppGameObjects = new CGameObject*[m_nGameObjects];
 
 	CGameObject *pApacheModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Apache.bin");
 	CApacheObject* pApacheObject = NULL;
@@ -82,7 +82,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pApacheObject->SetPosition(+130.0f, 0.0f, 160.0f);
 	pApacheObject->SetScale(1.5f, 1.5f, 1.5f);
 	pApacheObject->Rotate(0.0f, 90.0f, 0.0f);
-	m_ppGameObjects[0] = pApacheObject;
+	AddGameObject(pApacheObject);
 
 	pApacheObject = new CApacheObject();
 	pApacheObject->SetChild(pApacheModel, true);
@@ -90,7 +90,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pApacheObject->SetPosition(-75.0f, 0.0f, 80.0f);
 	pApacheObject->SetScale(1.5f, 1.5f, 1.5f);
 	pApacheObject->Rotate(0.0f, -90.0f, 0.0f);
-	m_ppGameObjects[1] = pApacheObject;
+	AddGameObject(pApacheObject);
 
 	CGameObject *pGunshipModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Gunship.bin");
 	CGunshipObject* pGunshipObject = NULL;
@@ -101,7 +101,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pGunshipObject->SetPosition(135.0f, 40.0f, 220.0f);
 	pGunshipObject->SetScale(8.5f, 8.5f, 8.5f);
 	pGunshipObject->Rotate(0.0f, -90.0f, 0.0f);
-	m_ppGameObjects[2] = pGunshipObject;
+	AddGameObject(pGunshipObject);
 
 	CGameObject *pSuperCobraModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/SuperCobra.bin");
 	CSuperCobraObject* pSuperCobraObject = NULL;
@@ -112,7 +112,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pSuperCobraObject->SetPosition(95.0f, 50.0f, 50.0f);
 	pSuperCobraObject->SetScale(4.5f, 4.5f, 4.5f);
 	pSuperCobraObject->Rotate(0.0f, -90.0f, 0.0f);
-	m_ppGameObjects[3] = pSuperCobraObject;
+	AddGameObject(pSuperCobraObject);
 
 	CGameObject *pMi24Model = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Mi24.bin");
 	CMi24Object* pMi24Object = new CMi24Object();
@@ -121,7 +121,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pMi24Object->SetPosition(-95.0f, 50.0f, 50.0f);
 	pMi24Object->SetScale(4.5f, 4.5f, 4.5f);
 	pMi24Object->Rotate(0.0f, -90.0f, 0.0f);
-	m_ppGameObjects[4] = pMi24Object;
+	AddGameObject(pMi24Object);
 
 	CGameObject* pHummerModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Hummer.bin");
 	CHummerObject* pHummerObject = new CHummerObject();
@@ -130,7 +130,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pHummerObject->SetPosition(260.0f, 0.0f, 150.0f);
 	pHummerObject->SetScale(8.0f, 8.0f, 8.0f);
 	pHummerObject->Rotate(0.0f, -90.0f, 0.0f);
-	m_ppGameObjects[5] = pHummerObject;
+	AddGameObject(pHummerObject);
 
 	CGameObject* pTankModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, "Model/Tank_b.bin");
 	CTankObject* pTankObject = new CTankObject();
@@ -139,7 +139,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	pTankObject->SetPosition(260.0f, 0.0f, 100.0f);
 	pTankObject->SetScale(8.0f, 8.0f, 8.0f);
 	pTankObject->Rotate(0.0f, -90.0f, 0.0f);
-	m_ppGameObjects[6] = pTankObject;
+	AddGameObject(pTankObject);
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
@@ -148,15 +148,20 @@ void CScene::ReleaseObjects()
 {
 	if (m_pd3dGraphicsRootSignature) m_pd3dGraphicsRootSignature->Release();
 
-	if (m_ppGameObjects)
+	if (!m_vGameObjects.empty())
 	{
-		for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->Release();
-		delete[] m_ppGameObjects;
+		for (int i = 0; i < m_vGameObjects.size(); i++) if (m_vGameObjects[i]) m_vGameObjects[i]->Release();
+		m_vGameObjects.clear();
 	}
 
 	ReleaseShaderVariables();
 
 	if (m_pLights) delete[] m_pLights;
+}
+
+void CScene::AddGameObject(CGameObject* pGameObject)
+{
+	m_vGameObjects.push_back(pGameObject);
 }
 
 ID3D12RootSignature *CScene::CreateGraphicsRootSignature(ID3D12Device *pd3dDevice)
@@ -226,7 +231,7 @@ void CScene::ReleaseShaderVariables()
 
 void CScene::ReleaseUploadBuffers()
 {
-	for (int i = 0; i < m_nGameObjects; i++) m_ppGameObjects[i]->ReleaseUploadBuffers();
+	for (int i = 0; i < m_vGameObjects.size(); i++) m_vGameObjects[i]->ReleaseUploadBuffers();
 }
 
 bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
@@ -241,12 +246,12 @@ bool CScene::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wPar
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		case 'W': m_ppGameObjects[0]->MoveForward(+1.0f); break;
-		case 'S': m_ppGameObjects[0]->MoveForward(-1.0f); break;
-		case 'A': m_ppGameObjects[0]->MoveStrafe(-1.0f); break;
-		case 'D': m_ppGameObjects[0]->MoveStrafe(+1.0f); break;
-		case 'Q': m_ppGameObjects[0]->MoveUp(+1.0f); break;
-		case 'R': m_ppGameObjects[0]->MoveUp(-1.0f); break;
+		case 'W': m_vGameObjects[0]->MoveForward(+1.0f); break;
+		case 'S': m_vGameObjects[0]->MoveForward(-1.0f); break;
+		case 'A': m_vGameObjects[0]->MoveStrafe(-1.0f); break;
+		case 'D': m_vGameObjects[0]->MoveStrafe(+1.0f); break;
+		case 'Q': m_vGameObjects[0]->MoveUp(+1.0f); break;
+		case 'R': m_vGameObjects[0]->MoveUp(-1.0f); break;
 		default:
 			break;
 		}
@@ -266,7 +271,7 @@ void CScene::AnimateObjects(float fTimeElapsed)
 {
 	m_fElapsedTime = fTimeElapsed;
 
-	for (int i = 0; i < m_nGameObjects; i++) m_ppGameObjects[i]->Animate(fTimeElapsed, NULL);
+	for (int i = 0; i < m_vGameObjects.size(); i++) m_vGameObjects[i]->Animate(fTimeElapsed, NULL);
 
 	if (m_pLights)
 	{
@@ -287,13 +292,13 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 	D3D12_GPU_VIRTUAL_ADDRESS d3dcbLightsGpuVirtualAddress = m_pd3dcbLights->GetGPUVirtualAddress();
 	pd3dCommandList->SetGraphicsRootConstantBufferView(2, d3dcbLightsGpuVirtualAddress); //Lights
 
-	for (int i = 0; i < m_nGameObjects; i++)
+	for (int i = 0; i < m_vGameObjects.size(); i++)
 	{
-		if (m_ppGameObjects[i])
+		if (m_vGameObjects[i])
 		{
-			m_ppGameObjects[i]->Animate(m_fElapsedTime, NULL);
-			m_ppGameObjects[i]->UpdateTransform(NULL);
-			m_ppGameObjects[i]->Render(pd3dCommandList, pCamera);
+			m_vGameObjects[i]->Animate(m_fElapsedTime, NULL);
+			m_vGameObjects[i]->UpdateTransform(NULL);
+			m_vGameObjects[i]->Render(pd3dCommandList, pCamera);
 		}
 	}
 }
