@@ -65,8 +65,9 @@ public:
 
 	void ReleaseUploadBuffers();
 
-	CPlayer* m_pPlayer = NULL;
-	CPlayer* m_pPlayer2 = NULL;
+	// 충돌처리
+	void CheckPlayerByObjectCollisions();
+	void CheckPlayerByBulletCollisions();
 
 public:
 	ID3D12RootSignature			*m_pd3dGraphicsRootSignature = NULL;
@@ -75,6 +76,9 @@ public:
 	//int							m_nGameObjects = 0;
 
 	std::vector<CGameObject*>	m_vGameObjects;
+
+	std::array<CPlayer*, 2> m_pPlayers;
+	int m_nActivePlayer = 0;
 
 	LIGHT						*m_pLights = NULL;
 	int							m_nLights = 0;

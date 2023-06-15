@@ -174,6 +174,8 @@ public:
 	void Rotate(XMFLOAT3 *pxmf3Axis, float fAngle);
 	void Rotate(XMFLOAT4 *pxmf4Quaternion);
 
+	void LookTo(XMFLOAT3& xmf3LookTo, XMFLOAT3& xmf3Up);
+
 	CGameObject *GetParent() { return(m_pParent); }
 	void UpdateTransform(XMFLOAT4X4 *pxmf4x4Parent=NULL);
 	CGameObject *FindFrame(char *pstrFrameName);
@@ -181,6 +183,7 @@ public:
 	UINT GetMeshType() { return((m_pMesh) ? m_pMesh->GetType() : 0); }
 
 	bool IsVisible(CCamera *pCamera=NULL);
+	bool IsIntersect(BoundingOrientedBox boundingBox);
 
 public:
 	static MATERIALSLOADINFO *LoadMaterialsInfoFromFile(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, FILE *pInFile);
@@ -290,8 +293,7 @@ public:
 	virtual ~CHummerObject();
 };
 
-class CTankObject : public CGameObject
-{
+class CTankObject : public CGameObject{
 public:
 	CTankObject();
 	virtual ~CTankObject();
@@ -302,4 +304,27 @@ protected:
 public:
 	virtual void OnInitialize();
 	virtual void Animate(float fTimeElapsed, XMFLOAT4X4 *pxmf4x4Parent = NULL);
+};
+
+class CBulletObject : public CGameObject{
+public:
+	CBulletObject();
+	virtual ~CBulletObject();
+
+	bool m_bIsFired = false;
+
+protected:
+	XMFLOAT3 m_xmf3MovingDirection = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	XMFLOAT3 m_xmf3FirePosition = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	float m_fEffectiveRange = 5.0f;
+	float m_fMovingDistance = 0.0f;
+	float m_fElapsedTimeAfterFire = 0.0f;
+	float m_fSpeed = 0.6f;
+
+public:
+	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera = NULL);
+	virtual void Animate(float fTimeElapsed, XMFLOAT4X4 *pxmf4x4Parent = NULL);
+
+	void Fire(XMFLOAT3 xmf3FirePosition, XMFLOAT3 xmf3MovingDirection);
+	void Reset();
 };

@@ -19,7 +19,7 @@ void CScene::BuildDefaultLightsAndMaterials()
 	m_pLights = new LIGHT[m_nLights];
 	::ZeroMemory(m_pLights, sizeof(LIGHT) * m_nLights);
 
-	m_xmf4GlobalAmbient = XMFLOAT4(0.15f, 0.15f, 0.15f, 1.0f);
+	m_xmf4GlobalAmbient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 
 	m_pLights[0].m_bEnable = true;
 	m_pLights[0].m_nType = POINT_LIGHT;
@@ -44,10 +44,10 @@ void CScene::BuildDefaultLightsAndMaterials()
 	m_pLights[1].m_fTheta = (float)cos(XMConvertToRadians(20.0f));
 	m_pLights[2].m_bEnable = true;
 	m_pLights[2].m_nType = DIRECTIONAL_LIGHT;
-	m_pLights[2].m_xmf4Ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	m_pLights[2].m_xmf4Ambient = XMFLOAT4(0.6f, 0.6f, 0.6f, 1.0f);
 	m_pLights[2].m_xmf4Diffuse = XMFLOAT4(0.8f, 0.8f, 0.8f, 1.0f);
 	m_pLights[2].m_xmf4Specular = XMFLOAT4(0.4f, 0.4f, 0.4f, 0.0f);
-	m_pLights[2].m_xmf3Direction = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	m_pLights[2].m_xmf3Direction = XMFLOAT3(0.0f, -1.0f, 0.0f);
 	m_pLights[3].m_bEnable = true;
 	m_pLights[3].m_nType = SPOT_LIGHT;
 	m_pLights[3].m_fRange = 600.0f;
@@ -234,6 +234,28 @@ void CScene::ReleaseUploadBuffers()
 	for (int i = 0; i < m_vGameObjects.size(); i++) m_vGameObjects[i]->ReleaseUploadBuffers();
 }
 
+void CScene::CheckPlayerByObjectCollisions()
+{
+	BoundingOrientedBox pxmBoundingBox = m_pPlayers[m_nActivePlayer]->m_pMesh->GetBoundingBox();
+	for (int i = 0; i < m_vGameObjects.size(); ++i) {
+		if (m_vGameObjects[i]->IsIntersect(pxmBoundingBox)) {
+
+		}
+	}
+}
+
+void CScene::CheckPlayerByBulletCollisions()
+{
+	std::array<CBulletObject*, MAX_BULLET> bullets = ((CTankPlayer*)m_pPlayers[m_nActivePlayer])->GetBullets();
+	BoundingOrientedBox pxmBoundingBox = m_pPlayers[(m_nActivePlayer + 1) % 2]->m_pMesh->GetBoundingBox();
+	
+	for (int i = 0; i < MAX_BULLET; ++i) {
+		if (bullets[i]->m_bIsFired && bullets[i]->IsIntersect(pxmBoundingBox)) {
+			bullets[i]->Reset();
+		}
+	}
+}
+
 bool CScene::OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam)
 {
 	return(false);
@@ -275,9 +297,11 @@ void CScene::AnimateObjects(float fTimeElapsed)
 
 	if (m_pLights)
 	{
-		m_pLights[1].m_xmf3Position = m_pPlayer->GetPosition();
-		m_pLights[1].m_xmf3Direction = m_pPlayer->GetLookVector();
+		//m_pLights[1].m_xmf3Position = m_pPlayer->GetPosition();
+		//m_pLights[1].m_xmf3Direction = m_pPlayer->GetLookVector();
 	}
+
+	//CheckPlayerByBulletCollisions();
 }
 
 void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera)
@@ -301,5 +325,10 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 			m_vGameObjects[i]->Render(pd3dCommandList, pCamera);
 		}
 	}
+
+	int playerIndex = (m_nActivePlayer + 1) % 2;
+	m_pPlayers[playerIndex]->Animate(m_fElapsedTime, NULL);
+	m_pPlayers[playerIndex]->UpdateTransform(NULL);
+	m_pPlayers[playerIndex]->Render(pd3dCommandList, pCamera);
 }
 

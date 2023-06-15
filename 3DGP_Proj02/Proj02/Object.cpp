@@ -314,6 +314,16 @@ void CGameObject::Rotate(XMFLOAT4* pxmf4Quaternion)
 	UpdateTransform(NULL);
 }
 
+void CGameObject::LookTo(XMFLOAT3& xmf3LookTo, XMFLOAT3& xmf3Up)
+{
+	XMFLOAT4X4 xmf4x4View = Matrix4x4::LookToLH(GetPosition(), xmf3LookTo, xmf3Up);
+	m_xmf4x4Transform._11 = xmf4x4View._11; m_xmf4x4Transform._12 = xmf4x4View._21; m_xmf4x4Transform._13 = xmf4x4View._31;
+	m_xmf4x4Transform._21 = xmf4x4View._12; m_xmf4x4Transform._22 = xmf4x4View._22; m_xmf4x4Transform._23 = xmf4x4View._32;
+	m_xmf4x4Transform._31 = xmf4x4View._13; m_xmf4x4Transform._32 = xmf4x4View._23; m_xmf4x4Transform._33 = xmf4x4View._33;
+
+	UpdateTransform(NULL);
+}
+
 bool CGameObject::IsVisible(CCamera* pCamera)
 {
 	OnPrepareRender();
@@ -323,6 +333,17 @@ bool CGameObject::IsVisible(CCamera* pCamera)
 	xmBoundingBox.Transform(xmBoundingBox, XMLoadFloat4x4(&m_xmf4x4World));
 	if (pCamera) bIsVisible = pCamera->IsInFrustum(xmBoundingBox);
 	return bIsVisible;
+}
+
+bool CGameObject::IsIntersect(BoundingOrientedBox boundingBox)
+{
+	if (m_pMesh)
+	{
+		BoundingOrientedBox xmBoundingBox = m_pMesh->GetBoundingBox();
+		xmBoundingBox.Transform(xmBoundingBox, XMLoadFloat4x4(&m_xmf4x4World));
+		return xmBoundingBox.Intersects(boundingBox);
+	}
+	return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -589,9 +610,9 @@ CGameObject* CGameObject::LoadFrameHierarchyFromFile(ID3D12Device* pd3dDevice, I
 					_stprintf_s(pstrDebug, 256, _T("(Child Frame: %p) (Parent Frame: %p)\n"), pChild, pGameObject);
 					OutputDebugString(pstrDebug);
 #endif
+				}
+			}
 		}
-	}
-}
 		else if (!strcmp(pstrToken, "</Frame>"))
 		{
 			break;
@@ -831,4 +852,59 @@ void CTankObject::Animate(float fTimeElapsed, XMFLOAT4X4* pxmf4x4Parent)
 		XMMATRIX xmmtxRotate = XMMatrixRotationY(XMConvertToRadians(360.0f * 2.0f) * fTimeElapsed);
 		m_pTurretFrame->m_xmf4x4Transform = Matrix4x4::Multiply(xmmtxRotate, m_pTurretFrame->m_xmf4x4Transform);
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+CBulletObject::CBulletObject()
+{
+}
+
+CBulletObject::~CBulletObject()
+{
+}
+
+void CBulletObject::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
+{
+	if (m_bIsFired)
+		CGameObject::Render(pd3dCommandList, pCamera);
+}
+
+void CBulletObject::Animate(float fElapsedTime, XMFLOAT4X4* pxmf4x4Parent)
+{
+	m_fElapsedTimeAfterFire += fElapsedTime;
+
+	float fDistance = m_fSpeed * fElapsedTime;
+
+	//XMMATRIX xmRotate = XMMatrixRotationRollPitchYaw(XMConvertToRadians(0.0f), XMConvertToRadians(0.0f), XMConvertToRadians(m_fRotationSpeed * fElapsedTime));
+	//XMStoreFloat4x4(&m_xmf4x4World, xmRotate * XMLoadFloat4x4(&m_xmf4x4World));
+
+	XMFLOAT3 xmf3Position = GetPosition();
+	XMStoreFloat3(&xmf3Position, XMLoadFloat3(&xmf3Position) + (XMLoadFloat3(&m_xmf3MovingDirection) * fDistance));
+	m_xmf4x4World._41 = xmf3Position.x; m_xmf4x4World._42 = xmf3Position.y; m_xmf4x4World._43 = xmf3Position.z;
+	m_fMovingDistance += fDistance;
+
+	SetPosition(m_xmf4x4World._41 + m_xmf3MovingDirection.x * m_fSpeed, 
+		m_xmf4x4World._42 + m_xmf3MovingDirection.y * m_fSpeed, 
+		m_xmf4x4World._43 + m_xmf3MovingDirection.z * m_fSpeed);
+
+	if (m_fMovingDistance > m_fEffectiveRange) Reset();
+}
+
+void CBulletObject::Fire(XMFLOAT3 xmf3FirePosition, XMFLOAT3 xmf3MovingDirection)
+{
+	m_bIsFired = true;
+	m_xmf3MovingDirection = xmf3MovingDirection;
+	m_xmf3FirePosition = xmf3FirePosition;
+
+	SetPosition(m_xmf3FirePosition);
+	LookTo(m_xmf3MovingDirection, XMFLOAT3(0.0f, 1.0f, 0.0f));
+	SetScale(7.0f, 7.0f, 7.0f);
+}
+
+void CBulletObject::Reset()
+{
+	m_bIsFired = false;
+	m_fMovingDistance = 0.0f;
+	m_fElapsedTimeAfterFire = 0.0f;
 }
