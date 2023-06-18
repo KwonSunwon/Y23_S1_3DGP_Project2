@@ -46,6 +46,11 @@ protected:
 
 	BoundingFrustum					m_xmFrustum;
 
+	float m_time = 0.0f;
+
+public:
+	XMFLOAT3 m_startPosition;
+
 public:
 	CCamera();
 	CCamera(CCamera *pCamera);

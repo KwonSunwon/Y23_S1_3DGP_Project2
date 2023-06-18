@@ -149,7 +149,7 @@ void CCamera::SetViewportsAndScissorRects(ID3D12GraphicsCommandList *pd3dCommand
 
 void CCamera::Update(CPlayer* pPlayer, XMFLOAT3& xmf3LookAt, float fTimeElapsed)
 {
-	//if (!pPlayer->GetActive()) {
+	//if (!((CTankPlayer*)pPlayer)->m_bActive) {
 	//	FXMVECTOR p1 = XMLoadFloat3(&m_startPosition);
 	//	FXMVECTOR p4 = XMLoadFloat3(&pPlayer->GetPosition());
 	//	FXMVECTOR p2 = XMVector3Transform(p1, XMMatrixTranslation(0.0f, 10.0f, 0.0f));
@@ -158,30 +158,32 @@ void CCamera::Update(CPlayer* pPlayer, XMFLOAT3& xmf3LookAt, float fTimeElapsed)
 	//	m_time += fTimeElapsed * 0.5f;
 	//	XMStoreFloat3(&m_xmf3Position, position);
 	//	// 다음 차례인 플레이어를 보면서 이동
-	//	SetLookAt(pPlayer->m_xmf3Position, pPlayer->m_xmf3Up);
+	//	SetLookAt(pPlayer->GetPosition(), pPlayer->GetUp());
 
 	//	// 카메라가 다음 차례 플레이어의 위치에 도달하면 다시 플레이어 활성화
 	//	if (m_time >= 1.0f) {
 	//		m_time = 0.0f;
-	//		pPlayer->SetActive(true);
+	//		((CTankPlayer*)pPlayer)->m_bActive = true;
 	//	}
 	//	return;
 	//}
 
 	// 카메라가 플레이어의 터렛의 위치를 바라보도록 설정
-	XMFLOAT3 xmf3TurretLook = ((CTankPlayer*)pPlayer)->m_pTurret->GetLook();
-	XMFLOAT3 xmf3TurretUp = ((CTankPlayer*)pPlayer)->m_pTurret->GetUp();
-	XMFLOAT3 xmf3TurretRight = ((CTankPlayer*)pPlayer)->m_pTurret->GetRight();
+	XMFLOAT3 xmf3TurretLook = ((CTankPlayer*)pPlayer)->GetLook();
+	XMFLOAT3 xmf3TurretUp = ((CTankPlayer*)pPlayer)->GetUp();
+	XMFLOAT3 xmf3TurretRight = ((CTankPlayer*)pPlayer)->GetRight();
 
 	XMFLOAT4X4 mtxRotate = Matrix4x4::Identity();
-	/*mtxRotate._11 = pPlayer->m_xmf3Right.x; mtxRotate._21 = pPlayer->m_xmf3Up.x; mtxRotate._31 = pPlayer->m_xmf3Look.x;
-	mtxRotate._12 = pPlayer->m_xmf3Right.y; mtxRotate._22 = pPlayer->m_xmf3Up.y; mtxRotate._32 = pPlayer->m_xmf3Look.y;
-	mtxRotate._13 = pPlayer->m_xmf3Right.z; mtxRotate._23 = pPlayer->m_xmf3Up.z; mtxRotate._33 = pPlayer->m_xmf3Look.z;*/
 	mtxRotate._11 = xmf3TurretRight.x; mtxRotate._21 = xmf3TurretUp.x; mtxRotate._31 = xmf3TurretLook.x;
 	mtxRotate._12 = xmf3TurretRight.y; mtxRotate._22 = xmf3TurretUp.y; mtxRotate._32 = xmf3TurretLook.y;
 	mtxRotate._13 = xmf3TurretRight.z; mtxRotate._23 = xmf3TurretUp.z; mtxRotate._33 = xmf3TurretLook.z;
 
-	XMFLOAT3 xmf3Offset = Vector3::TransformCoord(XMFLOAT3(0.0f, 5.0f, -15.0f), mtxRotate);
+	/*XMFLOAT4X4 mtxRotate = Matrix4x4::Identity();
+	mtxRotate._11 = m_xmf3Right.x; mtxRotate._21 = m_xmf3Up.x; mtxRotate._31 = m_xmf3Look.x;
+	mtxRotate._12 = m_xmf3Right.y; mtxRotate._22 = m_xmf3Up.y; mtxRotate._32 = m_xmf3Look.y;
+	mtxRotate._13 = m_xmf3Right.z; mtxRotate._23 = m_xmf3Up.z; mtxRotate._33 = m_xmf3Look.z;*/
+
+	XMFLOAT3 xmf3Offset = Vector3::TransformCoord(m_xmf3Offset, mtxRotate);
 	XMFLOAT3 xmf3Position = Vector3::Add(pPlayer->GetPosition(), xmf3Offset);
 	XMFLOAT3 xmf3Direction = Vector3::Subtract(xmf3Position, m_xmf3Position);
 	float fLength = Vector3::Length(xmf3Direction);

@@ -58,23 +58,7 @@ public:
 	void OnCollisionByWall();
 };
 
-#define BULLET_COUNT					3
-
-class CAirplanePlayer : public CPlayer
-{
-public:
-	CAirplanePlayer();
-	virtual ~CAirplanePlayer();
-
-	float						m_fBulletEffectiveRange = 150.0f;
-	CBulletObject*				m_ppBullets[BULLET_COUNT];
-
-	void FireBullet(CGameObject* pLockedObject);
-
-	virtual void OnUpdateTransform();
-	virtual void Animate(float fElapsedTime);
-	virtual void Render(HDC hDCFrameBuffer, CCamera* pCamera);
-};
+#define BULLET_COUNT 3
 
 class CTankPlayer : public CPlayer
 {
@@ -95,7 +79,7 @@ public:
 	void RotateTurret(float fAngle) { if (!m_bActive) return; m_pTurret->Rotate(0.0f, fAngle, 0.0f); }
 	void RotateGun(float fAngle);
 
-	void FireBullet(CGameObject* pLockedObject);
+	void FireBullet(CGameObject* pLockedObject = NULL);
 
 	virtual void Animate(float fElapsedTime);
 	virtual void Render(HDC hDCFrameBuffer, CCamera* pCamera);

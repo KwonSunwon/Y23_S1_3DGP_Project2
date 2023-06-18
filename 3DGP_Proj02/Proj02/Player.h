@@ -82,23 +82,6 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
 };
 
-class CAirplanePlayer : public CPlayer {
-public:
-	CAirplanePlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
-	virtual ~CAirplanePlayer();
-
-	CGameObject* m_pMainRotorFrame = NULL;
-	CGameObject* m_pTailRotorFrame = NULL;
-
-private:
-	virtual void OnInitialize();
-	virtual void Animate(float fTimeElapsed, XMFLOAT4X4* pxmf4x4Parent = NULL);
-
-public:
-	virtual CCamera* ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed);
-	virtual void OnPrepareRender();
-};
-
 #define MAX_BULLET 3
 
 class CTankPlayer : public CPlayer {
@@ -107,8 +90,12 @@ public:
 	virtual ~CTankPlayer();
 
 	CGameObject* m_pTurret = NULL;
-	std::array<CBulletObject*, MAX_BULLET> m_pBullets;
+	std::vector<CBulletObject*> m_pBullets;
 	int m_nLeftBullet = MAX_BULLET;
+
+	bool m_bActive;
+
+	float m_fScore = 0;
 
 private:
 	virtual void OnInitialize();
@@ -119,8 +106,6 @@ public:
 
 	virtual void Move(DWORD nDirection, float fDistance, bool bVelocity = false);
 	void FireBullet();
-
-	std::array<CBulletObject*, MAX_BULLET> GetBullets() { return m_pBullets; }
 
 	void OnCollisionByObject();
 };

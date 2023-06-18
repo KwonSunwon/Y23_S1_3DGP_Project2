@@ -310,7 +310,13 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		switch (wParam)
 		{
 		case VK_SPACE:
-			((CTankPlayer*)m_pPlayer)->FireBullet();
+			if (((CTankPlayer*)m_pPlayer)->m_nLeftBullet)
+				((CTankPlayer*)m_pPlayer)->FireBullet();
+			else {
+				m_pPlayer = m_pScene->ChangePlayer();
+				m_pCamera = m_pPlayer->GetCamera();
+			}
+			break;
 		default:
 			break;
 		}
@@ -415,13 +421,16 @@ void CGameFramework::BuildObjects()
 	m_pScene->m_pPlayer = m_pPlayer = pAirplanePlayer;
 	m_pCamera = m_pPlayer->GetCamera();*/
 
-	CTankPlayer* pTankPlayer = new CTankPlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature(), "Model/Tank_g.bin");
-	pTankPlayer->SetPosition(XMFLOAT3(0.0f, 0.0f, 20.0f));
+	CTankPlayer* pTankPlayer = new CTankPlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature(), "./Model/Tank_g.bin");
+	pTankPlayer->SetPosition(XMFLOAT3(0.0f, 0.0f, 50.0f));
+	pTankPlayer->Rotate(0.0f, 180.0f, 0.0f);
+	pTankPlayer->m_bActive = true;
 	m_pScene->m_pPlayers[0] = m_pPlayer = pTankPlayer;
 	m_pCamera = m_pPlayer->GetCamera();
 
-	pTankPlayer = new CTankPlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature(), "Model/Tank_b.bin");
-	pTankPlayer->SetPosition(XMFLOAT3(0.0f, 0.0f, -20.0f));
+	pTankPlayer = new CTankPlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature(), "./Model/Tank_b.bin");
+	pTankPlayer->SetPosition(XMFLOAT3(0.0f, 0.0f, -50.0f));
+	pTankPlayer->m_bActive = false;
 	m_pScene->m_pPlayers[1] = pTankPlayer;
 
 	m_pd3dCommandList->Close();
@@ -454,35 +463,42 @@ void CGameFramework::ProcessInput()
 	if (!bProcessedByScene)
 	{
 		DWORD dwDirection = 0;
-		if (pKeysBuffer[VK_UP] & 0xF0) dwDirection |= DIR_FORWARD;
-		if (pKeysBuffer[VK_DOWN] & 0xF0) dwDirection |= DIR_BACKWARD;
-		if (pKeysBuffer[VK_LEFT] & 0xF0) dwDirection |= DIR_LEFT;
-		if (pKeysBuffer[VK_RIGHT] & 0xF0) dwDirection |= DIR_RIGHT;
+		if (pKeysBuffer[0x57] & 0xF0) dwDirection |= DIR_FORWARD;
+		if (pKeysBuffer[0x53] & 0xF0) dwDirection |= DIR_BACKWARD;
+		if (pKeysBuffer[0x41] & 0xF0) dwDirection |= DIR_LEFT;
+		if (pKeysBuffer[0x44] & 0xF0) dwDirection |= DIR_RIGHT;
 		//if (pKeysBuffer[VK_PRIOR] & 0xF0) dwDirection |= DIR_UP;
 		//if (pKeysBuffer[VK_NEXT] & 0xF0) dwDirection |= DIR_DOWN;
 
-		float cxDelta = 0.0f, cyDelta = 0.0f;
-		POINT ptCursorPos;
-		if (GetCapture() == m_hWnd)
+		if (pKeysBuffer[0x45] & 0xF0) dwDirection |= DIR_ROTATE_RIGHT;
+		if (pKeysBuffer[0x51] & 0xF0) dwDirection |= DIR_ROTATE_LEFT;
+
+		/*float cxDelta = 0.0f, cyDelta = 0.0f;
+		POINT ptCursorPos;*/
+		/*if (GetCapture() == m_hWnd)
 		{
 			SetCursor(NULL);
 			GetCursorPos(&ptCursorPos);
 			cxDelta = (float)(ptCursorPos.x - m_ptOldCursorPos.x) / 3.0f;
 			cyDelta = (float)(ptCursorPos.y - m_ptOldCursorPos.y) / 3.0f;
 			SetCursorPos(m_ptOldCursorPos.x, m_ptOldCursorPos.y);
-		}
+		}*/
 
-		if ((dwDirection != 0) || (cxDelta != 0.0f) || (cyDelta != 0.0f))
-		{
-			if (cxDelta || cyDelta)
+		//if ((dwDirection != 0) || (cxDelta != 0.0f) || (cyDelta != 0.0f))
+		//{
+			/*if (cxDelta || cyDelta)
 			{
 				if (pKeysBuffer[VK_RBUTTON] & 0xF0)
-					m_pPlayer->Rotate(cyDelta, 0.0f, -cxDelta);
+					((CTankPlayer*)m_pPlayer)->m_pTurret->Rotate(0.0f, 0.0f, -cxDelta / 10);
 				else
-					m_pPlayer->Rotate(cyDelta, cxDelta, 0.0f);
-			}
-			if (dwDirection) m_pPlayer->Move(dwDirection, 1.5f, true);
-		}
+					((CTankPlayer*)m_pPlayer)->m_pTurret->Rotate(0.0f, cxDelta / 10, 0.0f);
+			}*/
+		//}
+		if (dwDirection) m_pPlayer->Move(dwDirection, 1.5f, true);
+		if (dwDirection & DIR_ROTATE_RIGHT)
+			((CTankPlayer*)m_pPlayer)->m_pTurret->Rotate(0, 1, 0);
+		else if (dwDirection & DIR_ROTATE_LEFT)
+			((CTankPlayer*)m_pPlayer)->m_pTurret->Rotate(0, -1, 0);
 	}
 	m_pPlayer->Update(m_GameTimer.GetTimeElapsed());
 }
@@ -563,6 +579,14 @@ void CGameFramework::FrameAdvance()
 #endif
 	if (m_pPlayer) m_pPlayer->Render(m_pd3dCommandList, m_pCamera);
 
+	std::vector<CBulletObject*> bullets = ((CTankPlayer*)m_pPlayer)->m_pBullets;
+	for (auto& bullet : bullets) {
+		if (!bullet->m_bIsFired) continue;
+		bullet->Animate(0.0f, NULL);
+		bullet->UpdateTransform(NULL);
+		bullet->Render(m_pd3dCommandList, m_pCamera);
+	}
+
 	d3dResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	d3dResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 	d3dResourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
@@ -594,8 +618,8 @@ void CGameFramework::FrameAdvance()
 
 	m_GameTimer.GetFrameRate(m_pszFrameRate + 12, 37);
 	size_t nLength = _tcslen(m_pszFrameRate);
-	XMFLOAT3 xmf3Position = m_pPlayer->GetPosition();
-	_stprintf_s(m_pszFrameRate + nLength, 70 - nLength, _T("(%4f, %4f, %4f)"), xmf3Position.x, xmf3Position.y, xmf3Position.z);
+	float score = ((CTankPlayer*)m_pPlayer)->m_fScore;
+	_stprintf_s(m_pszFrameRate + nLength, 70 - nLength, _T("Score : %4f"), score);
 	::SetWindowText(m_hWnd, m_pszFrameRate);
 }
 

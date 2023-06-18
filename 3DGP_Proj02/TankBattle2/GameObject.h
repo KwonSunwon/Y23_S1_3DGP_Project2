@@ -3,6 +3,11 @@
 #include "Mesh.h"
 #include "Camera.h"
 
+#define DIR_FORWARD					0x01
+#define DIR_BACKWARD				0x02
+#define DIR_LEFT					0x04
+#define DIR_RIGHT					0x08
+
 class CGameObject {
 public:
 	CGameObject() { }
@@ -95,6 +100,8 @@ public:
 
 	virtual void Animate(float fElapsedTime);
 };
+
+#define EXPLOSION_DEBRISES 100
 
 class CExplosiveObject : public CRotatingObject {
 public:

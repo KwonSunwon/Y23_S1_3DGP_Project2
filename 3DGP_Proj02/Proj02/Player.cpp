@@ -151,10 +151,10 @@ void CPlayer::Update(float fTimeElapsed)
 
 	if (m_pPlayerUpdatedContext) OnPlayerUpdateCallback(fTimeElapsed);
 
-	DWORD nCurrentCameraMode = m_pCamera->GetMode();
+	/*DWORD nCurrentCameraMode = m_pCamera->GetMode();
 	if (nCurrentCameraMode == THIRD_PERSON_CAMERA) m_pCamera->Update(m_xmf3Position, fTimeElapsed);
 	if (m_pCameraUpdatedContext) OnCameraUpdateCallback(fTimeElapsed);
-	if (nCurrentCameraMode == THIRD_PERSON_CAMERA) m_pCamera->SetLookAt(m_xmf3Position);
+	if (nCurrentCameraMode == THIRD_PERSON_CAMERA) m_pCamera->SetLookAt(m_xmf3Position);*/
 	m_pCamera->RegenerateViewMatrix();
 
 	fLength = Vector3::Length(m_xmf3Velocity);
@@ -219,108 +219,6 @@ void CPlayer::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamer
 	if (nCameraMode == THIRD_PERSON_CAMERA) CGameObject::Render(pd3dCommandList, pCamera);
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// CAirplanePlayer
-
-CAirplanePlayer::CAirplanePlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
-{
-	m_pCamera = ChangeCamera(/*SPACESHIP_CAMERA*/THIRD_PERSON_CAMERA, 0.0f);
-
-	//	CGameObject *pGameObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/Apache.bin");
-	CGameObject* pGameObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/Gunship.bin");
-
-	pGameObject->Rotate(15.0f, 0.0f, 0.0f);
-	pGameObject->SetScale(8.5f, 8.5f, 8.5f);
-	SetChild(pGameObject, true);
-
-	OnInitialize();
-
-	CreateShaderVariables(pd3dDevice, pd3dCommandList);
-}
-
-CAirplanePlayer::~CAirplanePlayer()
-{
-}
-
-void CAirplanePlayer::OnInitialize()
-{
-	//	m_pMainRotorFrame = FindFrame("rotor");
-	//	m_pTailRotorFrame = FindFrame("black_m_7");
-
-	m_pMainRotorFrame = FindFrame("Rotor");
-	m_pTailRotorFrame = FindFrame("Back_Rotor");
-}
-
-void CAirplanePlayer::Animate(float fTimeElapsed, XMFLOAT4X4* pxmf4x4Parent)
-{
-	if (m_pMainRotorFrame) {
-		XMMATRIX xmmtxRotate = XMMatrixRotationY(XMConvertToRadians(360.0f * 2.0f) * fTimeElapsed);
-		m_pMainRotorFrame->m_xmf4x4Transform = Matrix4x4::Multiply(xmmtxRotate, m_pMainRotorFrame->m_xmf4x4Transform);
-	}
-	if (m_pTailRotorFrame) {
-		XMMATRIX xmmtxRotate = XMMatrixRotationX(XMConvertToRadians(360.0f * 4.0f) * fTimeElapsed);
-		m_pTailRotorFrame->m_xmf4x4Transform = Matrix4x4::Multiply(xmmtxRotate, m_pTailRotorFrame->m_xmf4x4Transform);
-	}
-
-	CPlayer::Animate(fTimeElapsed, pxmf4x4Parent);
-}
-
-void CAirplanePlayer::OnPrepareRender()
-{
-	CPlayer::OnPrepareRender();
-}
-
-CCamera* CAirplanePlayer::ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed)
-{
-	DWORD nCurrentCameraMode = (m_pCamera) ? m_pCamera->GetMode() : 0x00;
-	if (nCurrentCameraMode == nNewCameraMode) return(m_pCamera);
-	switch (nNewCameraMode) {
-	case FIRST_PERSON_CAMERA:
-		SetFriction(2.0f);
-		SetGravity(XMFLOAT3(0.0f, 0.0f, 0.0f));
-		SetMaxVelocityXZ(2.5f);
-		SetMaxVelocityY(40.0f);
-		m_pCamera = OnChangeCamera(FIRST_PERSON_CAMERA, nCurrentCameraMode);
-		m_pCamera->SetTimeLag(0.0f);
-		m_pCamera->SetOffset(XMFLOAT3(0.0f, 20.0f, 0.0f));
-		m_pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 60.0f);
-		m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
-		m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
-		break;
-	case SPACESHIP_CAMERA:
-		SetFriction(100.5f);
-		SetGravity(XMFLOAT3(0.0f, 0.0f, 0.0f));
-		SetMaxVelocityXZ(40.0f);
-		SetMaxVelocityY(40.0f);
-		m_pCamera = OnChangeCamera(SPACESHIP_CAMERA, nCurrentCameraMode);
-		m_pCamera->SetTimeLag(0.0f);
-		m_pCamera->SetOffset(XMFLOAT3(0.0f, 0.0f, 0.0f));
-		m_pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 60.0f);
-		m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
-		m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
-		break;
-	case THIRD_PERSON_CAMERA:
-		SetFriction(20.5f);
-		SetGravity(XMFLOAT3(0.0f, 0.0f, 0.0f));
-		SetMaxVelocityXZ(25.5f);
-		SetMaxVelocityY(40.0f);
-		m_pCamera = OnChangeCamera(THIRD_PERSON_CAMERA, nCurrentCameraMode);
-		m_pCamera->SetTimeLag(0.25f);
-		m_pCamera->SetOffset(XMFLOAT3(0.0f, 105.0f, -140.0f));
-		m_pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 60.0f);
-		m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
-		m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
-		break;
-	default:
-		break;
-	}
-
-	m_pCamera->SetPosition(Vector3::Add(m_xmf3Position, m_pCamera->GetOffset()));
-	Update(fTimeElapsed);
-
-	return(m_pCamera);
-}
-
 CTankPlayer::CTankPlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, char* cFile)
 {
 	//m_pCamera = ChangeCamera(THIRD_PERSON_CAMERA, 0.0f);
@@ -331,24 +229,26 @@ CTankPlayer::CTankPlayer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd
 	SetMaxVelocityY(40.0f);
 	m_pCamera = OnChangeCamera(THIRD_PERSON_CAMERA, 0.0f);
 	m_pCamera->SetTimeLag(0.25f);
-	m_pCamera->SetOffset(XMFLOAT3(0.0f, 105.0f, -140.0f));
+	m_pCamera->SetOffset(XMFLOAT3(0.0f, 30.0f, -60.0f));
 	m_pCamera->GenerateProjectionMatrix(1.01f, 5000.0f, ASPECT_RATIO, 60.0f);
 	m_pCamera->SetViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0.0f, 1.0f);
 	m_pCamera->SetScissorRect(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
 
-	CGameObject* pGameObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, cFile);
-	pGameObject->Rotate(15.0f, 0.0f, 0.0f);
-	pGameObject->SetScale(8.5f, 8.5f, 8.5f);
+	CGameObject* pGameObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, cFile, XMFLOAT3(8.0f, 8.0f, 8.0f));
 	SetChild(pGameObject, true);
-
 	OnInitialize();
+	m_pTurret->MoveUp(8.0f);
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
-	CGameObject* pBulletModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/Bullet.bin");
-	for (int i = 0; i < m_pBullets.size(); i++) {
-		m_pBullets[i] = new CBulletObject;
-		m_pBullets[i]->SetChild(pBulletModel);
+	CGameObject* pBulletModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "./Model/Bullet.bin", XMFLOAT3(9.0, 9.0, 9.0));
+	CBulletObject* pBullet = NULL;
+	for (int i = 0; i < MAX_BULLET; ++i) {
+		pBullet = new CBulletObject();
+		pBullet->SetChild(pBulletModel, true);
+		pBullet->Reset();
+		
+		m_pBullets.push_back(pBullet);
 	}
 }
 
@@ -365,8 +265,9 @@ void CTankPlayer::Animate(float fTimeElapsed, XMFLOAT4X4* pxmf4x4Parent)
 {
 	CPlayer::Animate(fTimeElapsed, pxmf4x4Parent);
 
-	for (int i = 0; i < MAX_BULLET; i++) {
-		if (m_pBullets[i]->m_bIsFired) m_pBullets[i]->Animate(fTimeElapsed);
+	for (auto& bullet : m_pBullets) {
+		if (bullet->m_bIsFired)
+			bullet->Animate(fTimeElapsed);
 	}
 }
 
@@ -374,9 +275,9 @@ void CTankPlayer::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pC
 {
 	CPlayer::Render(pd3dCommandList, pCamera);
 
-	for (int i = 0; i < m_pBullets.size(); i++) {
-		if (m_pBullets[i]->m_bIsFired)
-			m_pBullets[i]->Render(pd3dCommandList, pCamera);
+	for (auto& bullet : m_pBullets) {
+		if (bullet->m_bIsFired)
+			bullet->Render(pd3dCommandList, pCamera);
 	}
 }
 
@@ -406,7 +307,7 @@ void CTankPlayer::FireBullet()
 	if (!m_nLeftBullet)	return;
 
 	CBulletObject* pBullet = nullptr;
-	for (const auto& bullet : m_pBullets) {
+	for (auto& bullet : m_pBullets) {
 		if (!bullet->m_bIsFired) {
 			pBullet = bullet;
 			break;
@@ -415,8 +316,10 @@ void CTankPlayer::FireBullet()
 
 	if (!pBullet) return;
 
-	pBullet->Fire(m_xmf3Position, m_xmf3Look);
-	//m_nLeftBullet--;
+	XMFLOAT3 look = m_pTurret->GetLook();
+	pBullet->Fire(m_xmf3Position, look);
+	pBullet->MoveUp(10);
+	m_nLeftBullet--;
 }
 
 void CTankPlayer::OnCollisionByObject()

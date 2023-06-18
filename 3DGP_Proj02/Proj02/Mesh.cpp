@@ -29,8 +29,9 @@ CMeshFromFile::CMeshFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
 	m_nType = pMeshInfo->m_nType;
 
 	// CMeshLoadInfo로 구한 모델 파일의 AABB 정보를 이용해 CMesh의 BoundingBox를 설정
-	BoundingOrientedBox xmBoundingBox = BoundingOrientedBox(pMeshInfo->m_xmf3AABBCenter, pMeshInfo->m_xmf3AABBExtents, XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
-	SetBoundingBox(xmBoundingBox);
+	//BoundingOrientedBox xmBoundingBox = BoundingOrientedBox(pMeshInfo->m_xmf3AABBCenter, pMeshInfo->m_xmf3AABBExtents, XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f));
+	//SetBoundingBox(xmBoundingBox);
+	m_xmBoundingBox = pMeshInfo->m_xmBoundingBox;
 
 	m_pd3dPositionBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pMeshInfo->m_pxmf3Positions, sizeof(XMFLOAT3) * m_nVertices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dPositionUploadBuffer);
 
